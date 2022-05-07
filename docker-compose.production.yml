@@ -1,0 +1,7 @@
+version: '3.9'
+services:
+  inform7:
+    env_file:
+      - production.env
+    restart: always
+    command: [ "/bin/bash", "/usr/src/production.sh" ]

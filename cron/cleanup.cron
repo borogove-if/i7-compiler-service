@@ -1,0 +1,6 @@
+# At midnight, deletes build files that are more than one day old.
+# Note that the container runs in UTC timezone by default.
+# One minute delay between each command is probably not necessary but ¯\_(ツ)_/¯
+
+0 0 * * *    find /usr/src/volume/Stash/* -maxdepth 0 -type d -ctime +1 -exec rm -rf {} \;
+1 0 * * *    find /usr/src/volume/Projects/* -maxdepth 0 -type d -ctime +1 -exec rm -rf {} \;

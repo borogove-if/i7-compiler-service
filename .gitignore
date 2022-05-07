@@ -1,0 +1,11 @@
+volume/Projects
+volume/Stash
+volume/.config
+
+volume/legacy/Projects
+volume/legacy/Inform/Documentation
+volume/legacy/Inform/Extensions/Reserved
+volume/legacy/Inform/Telemetry
+
+webservice/node_modules
+.env

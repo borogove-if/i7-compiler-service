@@ -1,0 +1,14 @@
+version: '3.9'
+services:
+  inform7:
+    build: .
+    env_file:
+      - development.env
+    ports:
+      - "3010:3010"
+    volumes:
+      - ./volume:/usr/src/volume:cached
+      - ./webservice:/usr/src/app
+      - /usr/src/app/node_modules
+      - /usr/src/app/dist
+    command: [ "/bin/bash", "/usr/src/development.sh" ]
