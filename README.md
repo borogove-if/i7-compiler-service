@@ -195,7 +195,8 @@ After the compilation has finished, the results can be fetched from `/results/:j
 
 ### 4. Downloading results
 
-If compilation was successful, the links retrieved in the previous stage point to the URLs where the results can be downloaded. The index URL is the root directory which doesn't work by itself, but the required index page should be appended to it. The "front page" is `Contents.html` for compiler version 6G60 and `Welcome.html` for everything else. Those pages contain internal links that let the user navigate inside the index.
+If compilation was successful, the links retrieved in the previous stage point to the URLs where the results can be downloaded. The index URL is the root directory which doesn't work by itself, but the required index page should be appended to it. The "front page" is `Contents.html` for compiler version 6G60 and `Welcome.html` for everything else. The top level index pages are "Welcome.html" (except in 6G60), "Contents.html", "Actions.html", "Kinds.html", "Phrasebook.html", "Rules.html", "Scenes.html", and "World.html".
+
 
 For example, if the response of the results check request is stored in a variable called `results` then the first index page is at `results.links.index + "Welcome.html"` (or `+ "Contents.html"` for 6G60.) The index URL contains a leading `/` character so it doesn't need to be added in between.
 
