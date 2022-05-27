@@ -63,7 +63,9 @@ For now the service installs version 10 by downloading [the latest version](http
 
 Extensions for 6G60/6M62 can be placed in the volume/legacy/Inform/Extensions directory. They will be included in the compilation process.
 
-Sending project-specific extensions and 10.1.0 extensions aren't implemented yet.
+For 10.1.0, there's a nest (a directory from where Inform looks for resources) inside the container in /usr/src/nests/friends-of-i7 where Dockerfile pulls the latest contents of the [Friends of Inform 7 extensions repository](https://github.com/i7/extensions) from GitHub. A cron task updates the nest once per day (see below.) Additional nests can be added by modifying compiler options in the webservice/src/services/compiler/v10.ts file.
+
+Sending project-specific extensions isn't implemented yet.
 
 
 ## Running with Borogove
@@ -119,19 +121,20 @@ UUID is the project's UUID/IFID, which *should* stay the same throughout the pro
 
 The "included" part should always look the same as in the example above, except for `included[0].attributes.contents` which should contain the game's source text. The service doesn't handle custom extensions or material files yet.
 
-The service sets up the project for compilation and returns a JSON response that contains the job id:
+The service sets up the project for compilation and returns a JSON response that contains the job id and the compiler version it will use in the compilation phase:
 
 ```json
 {
     "data": {
         "attributes": {
+            "compilerVersion": "",
             "jobId": ""
         }
     }
 }
 ```
 
-The job id is used in the later stages to identify the project. Note that the job id is based on the session ID but they should not be expected to always be the same.
+The compiler version is the same as what was passed to it in the request, except in Vorple projects (see below.) The job id is used in the later stages to identify the project. Note that the job id is based on the session ID but they should not be expected to always be the same.
 
 If there's an error, the service returns the error message instead:
 
@@ -197,19 +200,30 @@ After the compilation has finished, the results can be fetched from `/results/:j
 
 If compilation was successful, the links retrieved in the previous stage point to the URLs where the results can be downloaded. The index URL is the root directory which doesn't work by itself, but the required index page should be appended to it. The "front page" is `Contents.html` for compiler version 6G60 and `Welcome.html` for everything else. The top level index pages are "Welcome.html" (except in 6G60), "Contents.html", "Actions.html", "Kinds.html", "Phrasebook.html", "Rules.html", "Scenes.html", and "World.html".
 
-
 For example, if the response of the results check request is stored in a variable called `results` then the first index page is at `results.links.index + "Welcome.html"` (or `+ "Contents.html"` for 6G60.) The index URL contains a leading `/` character so it doesn't need to be added in between.
 
 The results will be removed after a while with the included cron jobs (see below.) Naturally the links to results stop working after the files have been deleted, so they should be considered temporary.
 
 
-## Cleanup cron jobs
+## Compiling Vorple projects
 
-The `cron` directory contains cron schedules that clean up old build files. At midnight UTC they'll check the file creation dates and delete everything that's older than one day.
+To compile [Vorple](https://vorple-if.com) projects, instead of `compilerVersion` pass `vorpleVersion` in the preparation phase. The compiler chooses the compiler version that's compatible with that version of Vorple and returns it in the response. Because the service doesn't save that information, you then need to send it back during the compilation phase. Compiler version goes in the URL and Vorple version is sent as a query parameter:
+
+```
+http://example.com/compile/10.1.0/putJobIdHere/debug?vorpleVersion=4.0.0
+```
+
+The only 3.x version of Vorple that's supported is 3.2.8. From version 4 onward the compiler includes the matching Vorple extensions that are placed in `volume/v10/nests/Vorple/x.x.x/Extensions` where x.x.x is the Vorple version. If there are no extensions for the requested version, the I7 compiler will just report that it doesn't find them.
+
+
+## Scheduled cron jobs
 
 Any files with a .cron file extension that are placed in the cron directory are installed as cron jobs in production. Cron logs are stored in /var/log/cron.log inside the Docker container.
 
 The cron jobs aren't installed in the development environment. The project files can be deleted manually from volume/Stash and volume/Projects.
+
+* The `cron/cleanup.cron` schedule cleans up old build files. At midnight UTC it checks the file creation dates and deletes everything that's older than one day.
+* The `cron/github-extensions.cron` schedule pulls the latest version of the Friends of Inform 7 group's extensions directory (see above.) The task runs at 01:00 UTC every day.
 
 
 ## Monitoring endpoints
