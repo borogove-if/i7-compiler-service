@@ -2,7 +2,8 @@ import { Request, Response } from "express";
 import { compile, prepare } from "../services/compiler";
 
 /**
- * Prepares for compiling source text. The client sends the source material and the server replies with the job id.
+ * Prepares for compiling source text. The client sends the source material and the server replies with the job id
+ * and compiler version that will be used in the actual compilation phase.
  */
 export async function prepareCompilation( req: Request, res: Response ): Promise<void> {
     const { data, included } = req.body;
@@ -12,13 +13,11 @@ export async function prepareCompilation( req: Request, res: Response ): Promise
     }
 
     try {
-        const jobId = await prepare( data, included );
+        const attributes = await prepare( data, included );
 
         res.json({
             data: {
-                attributes: {
-                    jobId
-                }
+                attributes
             }
         });
     } catch( e ) {
@@ -31,6 +30,7 @@ export async function prepareCompilation( req: Request, res: Response ): Promise
 
 export async function startCompilation( req: Request, res: Response ): Promise<void> {
     const { compilerVersion, jobId, variant } = req.params;
+    const vorpleVersion = typeof req.query.vorpleVersion === "string" ? req.query.vorpleVersion : undefined;
 
     res.writeHead(
         200,
@@ -52,6 +52,7 @@ export async function startCompilation( req: Request, res: Response ): Promise<v
             jobId,
             variant,
             compilerVersion,
+            vorpleVersion,
             ( content: string ) => res.write( content )
         );
     } catch( e ) {

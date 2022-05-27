@@ -3,7 +3,7 @@ import { join } from "path";
 
 import type { CompilationVariant } from "./index";
 import { stash } from "./stash";
-import { PROJECTS_DIR, V10_ROOT_DIR } from "../directories";
+import { PROJECTS_DIR, ROOT_DIR, V10_ROOT_DIR, VOLUME_DIR } from "../directories";
 import { compileI6 } from "./i6";
 
 const INFORM_INSTALLATION_DIR = join( V10_ROOT_DIR, "inform" );
@@ -14,14 +14,20 @@ const I7_EXECUTABLE_DIR = join( I7_INSTALLATION_DIR, "Tangled" );
 const I7_INTERNAL_DIR = join( I7_INSTALLATION_DIR, "Internal" );
 const I6_EXECUTABLE = join( I6_EXECUTABLE_DIR, "inform6" );
 const I7_EXECUTABLE = join( I7_EXECUTABLE_DIR, "inform7" );
+const INTERNAL_NEST_DIR = join( ROOT_DIR, "nests" );
+const FRIENDS_NEST_DIR = join( INTERNAL_NEST_DIR, "friends-of-i7" );
+const VOLUME_NEST_DIR = join( VOLUME_DIR, "v10", "nests" );
+const VORPLE_NEST_ROOT_DIR = join( VOLUME_NEST_DIR, "Vorple" );
 
 export async function compile(
     jobId: string,
     variant: CompilationVariant,
+    vorpleVersion: string | undefined,
     callback: ( content: string ) => boolean
 ): Promise < number > {
     const projectDirectory = join( PROJECTS_DIR, jobId + ".inform" );
     const isDebugVersion = variant === "debug";
+    const vorpleNestDirectory = vorpleVersion && join( VORPLE_NEST_ROOT_DIR, vorpleVersion );
 
     const compilerParams = [
         "-internal",
@@ -30,8 +36,15 @@ export async function compile(
         projectDirectory,
         "-at",
         I7_INSTALLATION_DIR,
+        "-nest",
+        FRIENDS_NEST_DIR,
         "-no-census-update"
     ];
+
+    if( vorpleNestDirectory ) {
+        compilerParams.push( "-nest" );
+        compilerParams.push( vorpleNestDirectory );
+    }
 
     if( isDebugVersion ) {
         compilerParams.push( "-debug" );

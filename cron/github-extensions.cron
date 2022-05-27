@@ -1,0 +1,3 @@
+# Once per night, get the latest versions of the Friends of I7 extensions from GitHub
+
+1 0 * * *   git -C /usr/src/nests/friends-of-i7/Extensions pull

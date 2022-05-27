@@ -31,6 +31,10 @@ RUN git clone --depth=1 --branch=master https://github.com/ganelson/inform.git
 WORKDIR /usr/src/inform7/v10/inform
 RUN bash scripts/first.sh
 
+# 10.1.0 Friends of Inform 7 extensions
+WORKDIR /usr/src/nests/friends-of-i7
+RUN git clone --depth=1 --branch=10.1 https://github.com/i7/extensions.git Extensions
+
 # Add cron scripts
 ADD cron/* /usr/src/cron/
 

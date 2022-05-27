@@ -25,6 +25,7 @@ interface ProjectData {
     language: "inform7" | "Inform 7";   // should be just "inform7", the "Inform 7" option is for backwards compatibility
     sessionId: string;
     uuid: string;
+    vorpleVersion?: string;
 }
 
 /**
@@ -88,21 +89,59 @@ export async function compile(
     jobId: string,
     variant: CompilationVariant,
     compilerVersion: string,
+    vorpleVersion: string | undefined,
     callback: ( content: string ) => boolean
 ): Promise <number> {
     validateCompilerVersion( compilerVersion );
     const isV10 = compilerVersion.indexOf( "10" ) === 0;
 
     if( isV10 ) {
-        return v10Compile( jobId, variant, callback );
+        return v10Compile( jobId, variant, vorpleVersion, callback );
     }
     else {
         return legacyCompile( jobId, variant, compilerVersion, callback );
     }
 }
 
-export async function prepare( data: ProjectData, files: ProjectFile[] ): Promise<string> {
-    const { compilerVersion, language, sessionId, uuid } = data;
+/**
+ * Maps a Vorple version to the corresponding Inform version that it's compatible with.
+ * The check is very basic as it's expected that the client sends valid data,
+ * otherwise the "garbage in, garbage out" rule applies.
+ */
+const getCompilerVersionForVorple = ( vorpleVersion: string, compilerVersion?: CompilerVersion ): CompilerVersion => {
+    if( typeof vorpleVersion !== "string" ) {
+        if( !compilerVersion ) {
+            throw new Error( "Invalid version data" );
+        }
+        return compilerVersion;
+    }
+
+    if( vorpleVersion.charAt( 1 ) !== "." ) {
+        throw new Error( "Unsupported Vorple version" );
+    }
+
+    const majorVersion = vorpleVersion.charAt( 0 );
+
+    switch( majorVersion ) {
+        case "3":
+            return "6M62";
+
+        case "4":
+            return "10.1.0";
+
+        default:
+            throw new Error( "Unsupported Vorple version" );
+    }
+};
+
+export async function prepare( data: ProjectData, files: ProjectFile[] ): Promise<{ compilerVersion: string; jobId: string }> {
+    const {
+        compilerVersion,
+        language,
+        sessionId,
+        uuid,
+        vorpleVersion
+    } = data;
 
     const jobId = sessionId.replace( /[^0-9a-z-]/ig, "" );
 
@@ -114,11 +153,18 @@ export async function prepare( data: ProjectData, files: ProjectFile[] ): Promis
         throw new Error( "Unknown language id " + language );
     }
 
-    validateCompilerVersion( compilerVersion );
+    let actualCompilerVersion = compilerVersion;
 
-    const templateDirectory = join( TEMPLATES_DIR, `Template.${compilerVersion}.inform` );
+    if( vorpleVersion ) {
+        // ignore compiler version given and use whatever is compatible with the Vorple version
+        actualCompilerVersion = getCompilerVersionForVorple( vorpleVersion, compilerVersion );
+    }
+
+    validateCompilerVersion( actualCompilerVersion );
+
+    const templateDirectory = join( TEMPLATES_DIR, `Template.${actualCompilerVersion}.inform` );
     const projectDirectory = join( PROJECTS_DIR, jobId + ".inform" );
-    const materialsDirectory = join( PROJECTS_DIR, jobId + ( compilerVersion === "6G60" ? " Materials" : ".materials" ) );
+    const materialsDirectory = join( PROJECTS_DIR, jobId + ( actualCompilerVersion === "6G60" ? " Materials" : ".materials" ) );
     const extensionsDirectory = join( materialsDirectory, "Extensions" );
     const uuidFilename = join( projectDirectory, "uuid.txt" );
     const sourceTextFilename = join( projectDirectory, "Source", "story.ni" );
@@ -193,5 +239,8 @@ export async function prepare( data: ProjectData, files: ProjectFile[] ): Promis
         throw e;
     }
 
-    return jobId;
+    return {
+        compilerVersion: actualCompilerVersion,
+        jobId
+    };
 }
