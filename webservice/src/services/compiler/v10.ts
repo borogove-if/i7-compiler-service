@@ -1,5 +1,6 @@
 import { spawn } from "child_process";
 import { join } from "path";
+import { promises } from "fs";
 
 import type { CompilationVariant } from "./index";
 import { stash } from "./stash";
@@ -18,6 +19,15 @@ const INTERNAL_NEST_DIR = join( ROOT_DIR, "nests" );
 const FRIENDS_NEST_DIR = join( INTERNAL_NEST_DIR, "friends-of-i7" );
 const VOLUME_NEST_DIR = join( VOLUME_DIR, "v10", "nests" );
 const VORPLE_NEST_ROOT_DIR = join( VOLUME_NEST_DIR, "Vorple" );
+
+const compilerBuildDate = async( callback: ( content: string ) => boolean ): Promise<void> => {
+    const execHandle = await promises.open( I7_EXECUTABLE, "r" );
+    const execStats = await execHandle.stat();
+    const ctime = execStats.ctime.toISOString().substring( 0, 10 );
+    execHandle.close();
+
+    callback( `Starting Inform 7 compiler (build date ${ctime})\n\n` );
+};
 
 export async function compile(
     jobId: string,
@@ -51,6 +61,9 @@ export async function compile(
     }
 
     const compilation = spawn( I7_EXECUTABLE, compilerParams );
+
+    // Add the date when the compiler was built to the output
+    compilerBuildDate( callback );
 
     // Send all output to the callback function, which sends the data on to the client.
     // We don't care whether the output is sent to stdout or stderr –
