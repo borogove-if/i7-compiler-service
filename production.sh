@@ -4,8 +4,10 @@
 sed -i '/imklog/s/^/#/' /etc/rsyslog.conf
 sed -i 's/^#cron/cron/' /etc/rsyslog.conf
 
-# cron won't run without rsyslog? And rsyslog won't start when placed in Dockerfile
+# Install cron scripts
 cat /usr/src/cron/*.cron | crontab -
+
+# cron won't run without rsyslog? And rsyslog won't start when placed in Dockerfile
 rsyslogd
 cron
 

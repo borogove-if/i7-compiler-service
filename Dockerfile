@@ -1,4 +1,4 @@
-FROM node:16
+FROM node:18.3.0
 
 # Install packages
 RUN apt-get update
