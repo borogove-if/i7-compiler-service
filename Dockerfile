@@ -21,13 +21,13 @@ RUN ./install-inform7.sh --prefix /usr/src/inform7/6G60
 
 # ...10.1.0
 WORKDIR /usr/src/inform7/v10
-RUN git clone --depth=1 --branch=master https://github.com/ganelson/inweb.git
+RUN git clone --depth=1 --branch=r7.2 https://github.com/ganelson/inweb.git
 RUN bash inweb/scripts/first.sh linux
 
-RUN git clone --depth=1 --branch=master https://github.com/ganelson/intest.git
+RUN git clone --depth=1 --branch=r2.1 https://github.com/ganelson/intest.git
 RUN bash intest/scripts/first.sh
 
-RUN git clone --depth=1 --branch=master https://github.com/ganelson/inform.git
+RUN git clone --depth=1 --branch=r10.1 https://github.com/ganelson/inform.git
 WORKDIR /usr/src/inform7/v10/inform
 RUN bash scripts/first.sh
 
